@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Spin Wheel</title>
+  <style>
+    body {
+      background: #222;
+      color: #fbf3f3;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .wheel-container {
+      position: relative;
+      width: 100;
+      max-width: 400px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.6); /* Box shadow for the wheel */
+      border-radius: 50%;
+      overflow: hidden;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      border-radius: 50%;
+    }
+
+    #spinBtn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #00cec9;
+      border: none;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      z-index: 2;
+      transition: background 0.3s;
+    }
+
+    #spinBtn:hover {
+      background: #01a29d;
+    }
+
+    .winner-box {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .add-box {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .add-box textarea {
+      padding: 10px;
+      font-size: 1rem;
+      width: 300px;
+      height: 150px;
+      border: none;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      resize: none;
+      white-space: pre-line;
+    }
+
+    .add-box button {
+      padding: 8px 16px;
+      background-color: #0984e3;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .add-box button:hover {
+      background-color: #086bc5;
+    }
+
+    #adminLogin {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #adminLogin input {
+      padding: 8px;
+      font-size: 1rem;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    #spinBtn:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    #addBtn:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    #newEntryInput:disabled {
+      background: #555;
+      cursor: not-allowed;
+      color: #aaa;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .popup-content {
+      background: rgb(43, 42, 42);
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .popup button {
+      margin-top: 10px;
+      background-color: #e74c3c;
+      border: none;
+      padding: 8px 12px;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .popup button:hover {
+      background-color: #c0392b;
+    }
+
+    .popup .close-btn {
+      background-color: #3498db;
+    }
+
+    .popup .close-btn:hover {
+      background-color: #2980b9;
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      pointer-events: none;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 9;
+    }
+
+    .participants-box {
+      margin-top: 20px;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    @media only screen and (max-width: 767px) {
+      .wheel-container {
+        width: 85%;
+    }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="wheel-container">
+    <canvas id="wheelCanvas" width="500" height="500"></canvas>
+    <button id="spinBtn" disabled>SPIN</button>
+  </div>
+
+  <div class="winner-box">Winner: <span id="winnerText">-</span></div>
+
+  <div class="participants-box">
+    <span id="participantsText">No participants yet</span>
+  </div>
+
+  <div class="add-box">
+    <textarea id="newEntryInput" disabled> </textarea><br>
+    <button onclick="addEntry()" id="addBtn" disabled>Add</button>
+  </div>
+
+  <div id="adminLogin">
+    <input type="password" id="adminPass" placeholder="Enter admin password">
+    <button onclick="checkAdmin()">Login as Admin</button>
+  </div>
+
+  <div class="popup" id="popup">
+    <div class="popup-content">
+      <h2>Winner: <span id="popupWinnerName">-</span></h2>
+      <button class="close-btn" onclick="closePopup()">Close</button>
+      <button class="remove-btn" onclick="removeWinner()">Remove</button>
+    </div>
+  </div>
+
+  <audio id="clapSound" src="clap.mp3" preload="auto"></audio>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script>
+    const canvas = document.getElementById("wheelCanvas");
+    const ctx = canvas.getContext("2d");
+    const spinBtn = document.getElementById("spinBtn");
+    const winnerText = document.getElementById("winnerText");
+    const participantsText = document.getElementById("participantsText");
+    const input = document.getElementById("newEntryInput");
+    const addBtn = document.getElementById("addBtn");
+    const adminPass = document.getElementById("adminPass");
+    const popup = document.getElementById("popup");
+    const popupWinnerName = document.getElementById("popupWinnerName");
+    const clapSound = document.getElementById("clapSound");
+
+    let entries = [];
+    const colors = [
+      "#6c5ce7", "#00cec9", "#fd79a8", "#fab1a0",
+      "#55efc4", "#ffeaa7", "#ff7675", "#a29bfe", "#81ecec"
+    ];
+
+    let startAngle = 0;
+    let spinAngle = 0;
+    let spinning = false;
+
+    function drawWheel() {
+      const arcSize = (2 * Math.PI) / entries.length;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const radius = canvas.width / 2;
+
+      entries.forEach((entry, i) => {
+        const angle = startAngle + i * arcSize;
+        ctx.beginPath();
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius, angle, angle + arcSize);
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(radius, radius);
+        ctx.rotate(angle + arcSize / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 18px sans-serif";
+        ctx.fillText(entry, radius - 10, 5);
+        ctx.restore();
+      });
+
+      ctx.save();
+      ctx.translate(radius, 0);
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.moveTo(-8, 0);
+      ctx.lineTo(8, 0);
+      ctx.lineTo(0, 20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+      ctx.shadowBlur = 5;
+      ctx.shadowOffsetX = 3;
+      ctx.shadowOffsetY = 3;
+      ctx.restore();
+    }
+
+    function spinWheel() {
+      if (spinning) return;
+      if (entries.length === 0) {
+        alert("Please add participants first.");
+        return;
+      }
+
+      spinning = true;
+
+      const spinTime = Math.random() * 2000 + 6000;
+      const finalAngle = Math.random() * 2 * Math.PI;
+      const start = performance.now();
+
+      function animate(time) {
+        const elapsed = time - start;
+        const progress = Math.min(elapsed / spinTime, 1);
+        const easedProgress = easeOut(progress);
+
+        spinAngle = easedProgress * 20 * Math.PI + finalAngle;
+        startAngle = spinAngle % (2 * Math.PI);
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          spinning = false;
+          const degrees = (startAngle * 180 / Math.PI) + 90;
+          const adjusted = degrees % 360;
+          const index = Math.floor(entries.length - (adjusted / 360) * entries.length) % entries.length;
+          const winner = entries[index >= 0 ? index : (index + entries.length)];
+          winnerText.textContent = winner;
+          openPopup(winner);
+          playClap();
+          launchConfetti();
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function easeOut(t) {
+      return 1 - Math.pow(1 - t, 4);
+    }
+
+    function addEntry() {
+      const val = input.value.trim();
+      if (!val) return;
+
+      entries = val
+        .split(/\n/)
+        .map(v => v.trim())
+        .filter(v => v);
+
+      updateParticipantsCount();
+      drawWheel();
+    }
+
+    function updateParticipantsCount() {
+      const numParticipants = entries.length;
+      if (numParticipants === 0) {
+        participantsText.textContent = "No participants yet";
+        spinBtn.disabled = true;
+      } else {
+        participantsText.textContent = `Current Participants (${numParticipants}):`;
+        spinBtn.disabled = false;
+      }
+    }
+
+    function checkAdmin() {
+      const password = adminPass.value.trim();
+      if (password === "admin123") {
+        spinBtn.disabled = false;
+        addBtn.disabled = false;
+        input.disabled = false;
+        alert("Admin access granted!");
+      } else {
+        alert("Incorrect password!");
+      }
+    }
+
+    function openPopup(winner) {
+      popupWinnerName.textContent = winner;
+      popup.style.display = "flex";
+    }
+
+    function closePopup() {
+      popup.style.display = "none";
+    }
+
+    function removeWinner() {
+      const winner = popupWinnerName.textContent.trim();
+      entries = entries.filter(entry => entry !== winner);
+      updateParticipantsCount();
+      drawWheel();
+      input.value = entries.join("\n");
+      closePopup();
+    }
+
+    function playClap() {
+      clapSound.currentTime = 0;
+      clapSound.play();
+    }
+
+    function launchConfetti() {
+      const duration = 3000;
+      const end = Date.now() + duration;
+      (function frame() {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+        });
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      })();
+    }
+
+    addEntry();
+    drawWheel();
+    spinBtn.addEventListener("click", spinWheel);
+  </script>
+</body>
+</html>
