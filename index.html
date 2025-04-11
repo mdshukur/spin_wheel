@@ -4,17 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Spin Wheel</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
       background: #222;
       color: #fbf3f3;
       font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       margin: 0;
       padding: 20px;
-      overflow-x: hidden;
     }
 
     .wheel-container {
@@ -24,6 +22,7 @@
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
       border-radius: 50%;
       overflow: hidden;
+      margin: 0 auto;
     }
 
     canvas {
@@ -59,18 +58,19 @@
       margin-top: 20px;
       font-size: 1.2rem;
       font-weight: bold;
+      text-align: center;
     }
 
     .add-box {
-      margin-top: 30px;
+      margin-top: 15px;
       text-align: center;
     }
 
     .add-box textarea {
       padding: 10px;
       font-size: 1rem;
-      width: 300px;
-      height: 150px;
+      width: 100%;
+      height: 200px;
       border: none;
       border-radius: 5px;
       margin-bottom: 10px;
@@ -93,18 +93,27 @@
     }
 
     #adminLogin {
-      margin-top: 20px;
+      margin-top: 15px;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-
+#adminLogin button {
+    padding: 7px 10px;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    margin-top:5px;
+    font-weight: 500;
+    border-radius: 2px;
+}
     #adminLogin input {
       padding: 8px;
       font-size: 1rem;
       margin-bottom: 10px;
       border-radius: 5px;
       border: none;
+      width: 40%;
     }
 
     #spinBtn:disabled,
@@ -139,7 +148,10 @@
       border-radius: 8px;
       text-align: center;
     }
-
+    .popup-content h2{
+    font-size: 22px;
+    font-weight: 700;
+    }
     .popup button {
       margin-top: 10px;
       background-color: #e74c3c;
@@ -176,11 +188,22 @@
       margin-top: 20px;
       font-size: 1.1rem;
       font-weight: bold;
+      text-align: center;
     }
 
-    @media only screen and (max-width: 767px) {
+    .wheel-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    @media (max-width: 767.98px) {
       .wheel-container {
         width: 95%;
+      }
+      
+      .content-column {
+        margin-top: 30px;
       }
     }
   </style>
@@ -188,26 +211,36 @@
 <body>
 <canvas id="confetti-canvas"></canvas>
 
-<div class="wheel-container">
-  <canvas id="wheelCanvas" width="500" height="500"></canvas>
-  <button id="spinBtn" disabled>SPIN</button>
-</div>
+<div class="container">
+  <div class="spin_wheen_title mb-md-5 mb-4">
+    <h2 class="text-center"> Spin Wheel (Admin Only)</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6 wheel-column">
+      <div class="wheel-container">
+        <canvas id="wheelCanvas" width="500" height="500"></canvas>
+        <button id="spinBtn" disabled>SPIN</button>
+      </div>
+      
+      <div class="winner-box">Winner: <span id="winnerText">-</span></div>
+      <div class="participants-box">
+      </div>
+    </div>
+    
+    <div class="col-md-6 content-column">
+        <span id="participantsText">No participants yet</span>
+      <div class="add-box">
+        <textarea id="newEntryInput" disabled></textarea><br>
+        <button onclick="addEntry()" id="addBtn" disabled>➕ Add</button>
+        <button onclick="shuffleEntries()" id="shuffleBtn" disabled>🔀 Shuffle</button>
+      </div>
 
-<div class="winner-box">Winner: <span id="winnerText">-</span></div>
-
-<div class="participants-box">
-  <span id="participantsText">No participants yet</span>
-</div>
-
-<div class="add-box">
-  <textarea id="newEntryInput" disabled></textarea><br>
-  <button onclick="addEntry()" id="addBtn" disabled>➕ Add</button>
-  <button onclick="shuffleEntries()" id="shuffleBtn" disabled>🔀 Shuffle</button>
-</div>
-
-<div id="adminLogin">
-  <input type="password" id="adminPass" placeholder="Enter admin password">
-  <button onclick="checkAdmin()">Login as Admin</button>
+      <div id="adminLogin">
+        <input type="password" id="adminPass" placeholder="Enter admin password">
+        <button onclick="checkAdmin()">Login as Admin</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="popup" id="popup">
@@ -220,6 +253,7 @@
 
 <audio id="clapSound" src="clap.mp3" preload="auto"></audio>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
   const canvas = document.getElementById("wheelCanvas");
