@@ -36,14 +36,14 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 80px;
-      height: 80px;
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
       background: #00cec9;
       border: none;
       color: #fff;
-      font-size: 1rem;
-      font-weight: bold;
+      font-size:1rem;
+      font-weight: 700;
       cursor: pointer;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
       z-index: 2;
@@ -216,10 +216,10 @@
     <h2 class="text-center"> Spin Wheel (Admin Only)</h2>
   </div>
   <div class="row">
-    <div class="col-md-6 wheel-column">
+    <div class="col-md-6 offset-md-2 wheel-column">
       <div class="wheel-container">
         <canvas id="wheelCanvas" width="500" height="500"></canvas>
-        <button id="spinBtn" disabled>SPIN</button>
+        <button id="spinBtn" disabled>Spin</button>
       </div>
       
       <div class="winner-box">Winner: <span id="winnerText">-</span></div>
@@ -227,7 +227,7 @@
       </div>
     </div>
     
-    <div class="col-md-6 content-column">
+    <div class="col-md-4 content-column">
         <span id="participantsText">No participants yet</span>
       <div class="add-box">
         <textarea id="newEntryInput" disabled></textarea><br>
